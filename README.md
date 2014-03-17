@@ -40,14 +40,14 @@ It's a multithreaded program which consists of three worker threads and the main
 Computer Vision related tasks are generated via OpenCV, and the 
 [Context Tracker](http://iris.usc.edu/outlines/papers/2011/dinh-vo-medioni-cvpr11.pdf). Threading related tasks are accomplished via [Boost](http://www.boost.org/doc/libs/1_55_0/doc/html/thread.html).  Speech Synthesis is accomplished via Microsoft's Speech Synthesis class.
 
-#####Program Flow
+####Program Flow
 
 The three threads share information such as:
 - Object position
 - Video capture object
 
 
-In main()
+#####In main()
 
 1. In main() - Program starts, and a live stream of the webcam's field of view is displayed on screen
 2. Press X
@@ -58,7 +58,7 @@ In main()
 	5a. Vision, Sound or Video Recording Thread. Because any of these threads can occur first, the first
 	step in each one is '5a'.
 
-- In Vision Thread
+#####In Vision Thread
 
 5a. Grab a frame from the 'stream' from step 5. Pass the frame through the three main funcions (init, getRoi, track)
 
@@ -69,7 +69,7 @@ object is
 
 8. Loop back to 5a and grab a new frame
 
-- In Sound Thread
+#####In Sound Thread
 
 5a1. If we're doing sound localization, then we need to communicate via sockets to the node/express server
 
@@ -78,7 +78,7 @@ object is
 
 6. Loop back to 5a
 
-- In Recording thread
+#####In Recording thread
 
 5a. Grab a frame from the 'stream'
 
