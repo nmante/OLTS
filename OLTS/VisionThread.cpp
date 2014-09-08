@@ -10,6 +10,57 @@ void VisionThread::testMSBuild(){
 }
 
 /*
+	Responsible for Bluetooth connections
+
+*/
+
+bool VisionThread::openBluetoothConnection(){
+#ifdef WIN32
+	WSADATA wsd;
+	int error = WSAStartup (MAKEWORD(1, 0), &wsd);
+	if (error)
+	{
+		std::cout << "Error making wsa bluetooth connection" << std::endl;
+		return false;
+	}
+
+	if(wsd.wVersion != MAKEWORD(1,0)){
+		WSACleanup();
+		return false;
+	}
+#endif
+
+	SOCKET server_socket = socket(af_bt, SOCK_STREAM, BTHPROTO_RFCOMM);
+	SOCKADDR_BTH sa;
+	memset(&sa, 0, sizeof(sa));
+	int channel = 0
+	sa.addressFamily = AF_BT;
+	sa.port = channel & 0xff;
+
+	if (bind(server_socket, (SOCKADDR *)&sa, sizeof(sa)))
+	{
+		// Server binding failed.  TODO error handling
+
+		closesocket(server_socket);
+		return 0;
+
+	}
+
+	if (listen(server_socket, 5)){
+		// Do some error handling
+		closesocket(server_socket);
+		return 0;
+	}
+
+
+	SOCKADDR_BTH sa2;
+	int size = sizeof(sa2);
+	SOCKET s2 = accept (server_socket, (SOCKADDR *)&sa2, &size);
+	mSocket = s2;
+
+}
+
+/*
 	Responsible for openning connection with server
 */
 bool VisionThread::openConnection(char *ipAddress, int portNo){
@@ -128,6 +179,10 @@ VisionThread::~VisionThread(){
 /******** Vision Thread ************/
 /***********************************/
 
+void VisionThread::doVibProcess(VisionThread *vThrd1, int yieldCount)
+{
+	
+}
 void VisionThread::doVssProcess(VisionThread *vThrd1, int yieldCount){
 	boost::mutex::scoped_lock lock(multipleTrackerMutex);
 	int myObjectPosition = -1;
@@ -155,6 +210,7 @@ void VisionThread::doVssProcess(VisionThread *vThrd1, int yieldCount){
 	/*
 		Take the frame (mFrame) and pass it through the tracking algorithms
 	*/
+	int fileNumber = 0;
     while (vThrd1->mFrame)
     {
 		//ticks=cvGetTickCount(); // start tick 
@@ -216,6 +272,11 @@ void VisionThread::doVssProcess(VisionThread *vThrd1, int yieldCount){
 			std::map<std::string, std::string> requestMap;
 			std::ostringstream requestStream, jsonStream, contentLengthStream;
 			std::vector<std::string> requestVector;
+			std::ostringstream fileNumberStream;
+			fileNumberStream << fileNumber;
+			std::string jsonFileName = std::string("output") + fileNumberStream.str() + std::string(".json");
+			
+
 			requestVector.push_back(std::string("POST /position HTTP/1.1\r\n"));
 			requestVector.push_back(std::string("Host: www.google.com\r\n"));
 			
@@ -223,24 +284,39 @@ void VisionThread::doVssProcess(VisionThread *vThrd1, int yieldCount){
 			jsonStream << "{\n\t\"xpos\": " << xpos << ",\n\t\"ypos\": " << ypos;
 			jsonStream << ",\n\t\"cameraWidth\": " << cameraWidth << ",\n\t\"cameraHeight\":" << cameraHeight << "\n}";
 			std::string jsonString = jsonStream.str();
+
 			contentLengthStream << "Content-Length: " << jsonString.length() << "\r\n";
 			requestVector.push_back(contentLengthStream.str());
 			requestVector.push_back(std::string("Connection: Keep-Alive\r\n"));
 			requestVector.push_back(std::string("\r\n"));
 			requestVector.push_back(jsonString);
 
-			std::string requestString = createRequestString(requestVector); 
-			fprintf(output_json, requestString.c_str());
 
+			std::string requestString = createRequestString(requestVector);
+			DEBUG2("Printing to output_json"); 
+			if (output_json)
+			{
+				fprintf(output_json, requestString.c_str());
+			}
+			
+			DEBUG2("Printing to");
+			DEBUG2(jsonFileName);
+			if (SHOULD_OUTPUT_JSON_TEST)
+			{
+				FILE *jsonDocument = NULL;
+				jsonDocument = fopen(jsonFileName.c_str(), "w");
+				fprintf(jsonDocument, jsonString.c_str());
+				fclose(jsonDocument);
+				fileNumber++;
+			}
+			
 			size_t reqBuflength = strlen(requestString.c_str());//strlen(request);
 
 			//Send the request to our server via a socket
 			int size = send(mSocket, requestString.c_str(), reqBuflength, 0);
 			std::cout << "Sent: " << size << " bytes. Message is " << requestString << std::endl;
+				
 		}
-
-
-	
 
 		std::time_t t = std::time(0);
 
@@ -331,6 +407,10 @@ void VisionThread::doVssProcess(VisionThread *vThrd1, int yieldCount){
 			return;
 		}
 		*/
+	}
+	if (output_json)
+	{
+		fclose(output_json);
 	}
 
 	// Create an HTTP Request.  We're POSTing an empty position to the

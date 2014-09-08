@@ -173,7 +173,7 @@ int main(int argc, char * argv[])
     CvCapture * capture = NULL;
     if (webcam){
 		cout << "Creating Webcam" << endl;
-        capture = cvCreateCameraCapture(1);
+        capture = cvCreateCameraCapture(0);
 	}else{
         capture = cvCreateFileCapture(vidFile);
 	}
@@ -181,8 +181,14 @@ int main(int argc, char * argv[])
 	/*
 		Grab an image, then create a copy for drawing a bounding box on
 	*/
-    IplImage  * frame   = cvQueryFrame(capture);
-    IplImage  * drawImg = cvCloneImage(frame);
+    IplImage  * frame   = cvQueryFrame(capture), *drawImg;
+    try {
+		drawImg = cvCloneImage(frame);
+    }catch (cv::Exception & ex){
+    	cout << "Camera is not properly connected" << endl;
+    	cout << ex.what() << endl;
+    	return -1;
+    }
 
     /*
 		Create file pointers/buffers for our output text and video files

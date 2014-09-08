@@ -18,6 +18,7 @@
 /* Platform Specific Libraries */
 #ifdef WIN32
 #include <Windows.h>
+#include <BluetoothAPIs.h>
 #endif
 
 
@@ -97,8 +98,8 @@ namespace nii{
 		DOWN,
 		LOWER_RIGHT
 	};
-	#define SPEAKING_RATE 0
-	#define SPEAKING_RATE_SLOW 1
+	#define SPEAKING_RATE 2
+	#define SPEAKING_RATE_SLOW 3
 
 	/* Use positionMutex when manipulating the shared variable 'objectPosition' */
 	extern boost::mutex positionMutex;
@@ -176,6 +177,8 @@ namespace nii{
 #define DEBUG2(x) do { \
 	if(_DEBUG_) {std::cerr << #x << ": " << x << std::endl; } \
 } while (0)
+
+#define SHOULD_OUTPUT_JSON_TEST 0
 /*
 	Helper functions for writing position, logo and text to an opencv Image/frame
 */

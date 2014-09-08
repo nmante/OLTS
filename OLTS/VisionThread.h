@@ -42,6 +42,9 @@ public:
 	//Context Tracker encapsulated to this thread
 	void doProcess(VisionThread *, int);
 
+	// Context tracker talks to raspberry pi
+	void doVibProcess(VisionThread *, int);
+
 	//Context tracker encapsulated to this thread, talks to server in this thread as well
 	void doVssProcess(VisionThread *, int);
 
